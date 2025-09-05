@@ -1,0 +1,1569 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "iProov REST API",
+        "description": "This is the iProov API documentation guidelines, for simple integration of the iProov system. Note: The base_url that needs to be used is the one in the Service Location.\n# Introduction\nTo use the iProov service, you will need a valid account on [portal.iproov.com](https://portal.iproov.com), where you\nwill be able to set up your Service Provider API credentials.\n\nFor a full description of how to use the APIs and services in your user journeys see the\n[Documentation Centre](https://docs.iproov.com/docs/Content/ImplementationGuide/api/api-intro.htm).\n# Verifier\nTo use Verifier, you need to generate a token with the `/claim/TYPE/token` endpoint, where TYPE is `verify` or `enrol`.\nOnce the claim has finished, you should then make a server to server validation call to the `/claim/TYPE/validate`\nendpoint to ensure there has been no tampering with the result from the client.\n# Service Provider API Key and Secret Authentication\nGeneral operations are secured by the `api_key` and `secret` parameters in the request body. See the individual\noperation sample request bodies for example usage. The additional schemes below are used for Management and User APIs.\n",
+        "contact": {
+            "name": "iProov API Team"
+        },
+        "version": "2.16.0",
+        "x-logo": {
+            "url": "logo.svg"
+        }
+    },
+    "host": "<base_url>",
+    "basePath": "/api/v2",
+    "schemes": [
+        "https"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/availability": {
+            "get": {
+                "tags": [
+                    "Management"
+                ],
+                "summary": "Check the platform is available",
+                "description": "Check the requested platform is available.",
+                "operationId": "platformAvailable",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "query",
+                        "description": "The API key of the service provider",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/AvailabilityResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/claim/{token}/invalidate": {
+            "post": {
+                "tags": [
+                    "Management"
+                ],
+                "summary": "Invalidates a token",
+                "description": "Invalidates a token",
+                "operationId": "invalidateToken",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "The token to invalidate",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "claim_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/InvalidateClaimRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidateClaimResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Access Denied",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/claim/verify/token": {
+            "post": {
+                "tags": [
+                    "Verify"
+                ],
+                "summary": "Generate a verification token for an existing user to verify with a service provider.",
+                "description": "Generate a verification token for an existing user to verify with a service provider.\n\nIf the given `assurance_type` is invalid or not allowed then the response will be a 403. For example:\n\n- GPA when only LA allowed with that SP key, will be rejected.\n- LA when only GPA allowed, will be rejected.\n- Unspecified (Default: GPA) and only LA allowed, will be rejected.\n\nNote:\n - The returned `token` is valid for 2 mins.\n",
+                "operationId": "userVerifyServerToken",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "claim_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ServerClaimRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ClaimResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Invalid Assurance Type, Service Provider Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidAssuranceTypeResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate Limit Exceeded",
+                        "schema": {
+                            "$ref": "#/definitions/RateLimitExceededResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/claim/verify/validate": {
+            "post": {
+                "tags": [
+                    "Verify"
+                ],
+                "summary": "Validate the verification was successful",
+                "description": "Validate the verification was successful.\n\nThis endpoint can only be called ONCE after a full end to end transaction has been completed. Subsequent calls will\nreturn a 400. This end-point will also return 400 if it is called before video streaming finishes.\n\nNote that we strongly recommend you call this endpoint to avoid any man in the middle attacks between the user trying\nto authenticate and the iProov service (including by the user attempting to log in!).",
+                "operationId": "userVerifyValidate",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "validate_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ClaimValidateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ClaimValidateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/{api_key}/access_token": {
+            "post": {
+                "tags": [
+                    "Management"
+                ],
+                "summary": "Allows a registered application to obtain an OAuth 2 Bearer Token",
+                "description": "Allows a registered application to obtain an OAuth 2 Bearer Token, which can be used to make API\nrequests on an application\u2019s own behalf, without a user context. Currently only `client_credentials` grant is\nsupported.\n\nNote:\n- The OAuth username and password are to be provided via the Authorization header in Basic format. These are\ndistinct to the service provider API key and secret and supplied separately.\n- The `access_token` returned expires after 1 hr, or after 50 requests, whichever is earlier.\n- The `access_token` needs to be refreshed after it expires.",
+                "operationId": "generateToken",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "grant_type",
+                        "in": "formData",
+                        "description": "The type of grant being requested by the application",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "scope",
+                        "in": "formData",
+                        "description": "Optionally define the scopes being required (omitting grants all allowed scopes)",
+                        "required": false,
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "api_key",
+                        "in": "path",
+                        "description": "The API key of the service provider",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/AuthTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/OAuthServerErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "basicAuth": []
+                    }
+                ]
+            }
+        },
+        "/claim/enrol/token": {
+            "post": {
+                "tags": [
+                    "Enrol"
+                ],
+                "summary": "Generate an enrolment token for a new user to enrol with a service provider",
+                "description": "Generate an enrolment token for a new user to enrol with a service provider.\n\nIf the given `assurance_type` is invalid or not allowed then the response will be a 403. For example:\n\n- GPA when only LA allowed with that SP key, will be rejected.\n- LA when only GPA allowed, will be rejected.\n- Unspecified (Default: GPA) and only LA allowed, will be rejected.\n\n Note:\n - The returned `token` is valid for 2 mins.\n - For **Capture Enrol**, this token should be used to launch the SDK.\n - For **Photo Enrol**, this token should be used for the Enrol Image API below.",
+                "operationId": "userEnrolServerToken",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "claim_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ServerClaimRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ClaimResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Invalid Assurance Type, Service Provider Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidAssuranceTypeResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate Limit Exceeded",
+                        "schema": {
+                            "$ref": "#/definitions/RateLimitExceededResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                },
+                "x-redoc-order": 1
+            }
+        },
+        "/users/{user_id}/activate": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Activate a user's persona for a service provider",
+                "description": "Activate a user's persona for a service provider",
+                "operationId": "userActivate",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "description": "The asserted identifier of the user",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "claim_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ChangeStateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Access Denied",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "oauth2": [
+                            "user-write-status"
+                        ]
+                    }
+                ],
+                "x-redoc-order": 1
+            }
+        },
+        "/claim/enrol/image": {
+            "post": {
+                "tags": [
+                    "Enrol"
+                ],
+                "summary": "Enrol a user through a trusted photo",
+                "description": "Enrols a user through a photo that is trusted by the service provider to be a likeness of the user.\nTo call this endpoint you need to perform a previous API call:\n * Firstly get a token that is associated with a user ID.\n * Secondly upload the image with this endpoint. File attachment size limit is 2 MB.\n\nAccepted media types are PNG, JPEG and JP2 images.\n\nNote that due to the security implications of allowing users to enrol with just images this endpoint is restricted on a\nper service provider basis",
+                "operationId": "userEnrolImage",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "api_key",
+                        "in": "formData",
+                        "description": "The API key of the service provider",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "secret",
+                        "in": "formData",
+                        "description": "The API secret for the service provider",
+                        "required": true,
+                        "type": "string",
+                        "format": "password"
+                    },
+                    {
+                        "name": "rotation",
+                        "in": "formData",
+                        "description": "The rotation of the image (currently only 0 is supported)",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "image",
+                        "in": "formData",
+                        "description": "The image to enrol the user with",
+                        "required": true,
+                        "type": "file"
+                    },
+                    {
+                        "name": "token",
+                        "in": "formData",
+                        "description": "The enrolment token for the user",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "source",
+                        "in": "formData",
+                        "description": "The source of the image (i.e. Electronic ID or Optical ID)",
+                        "required": false,
+                        "type": "string",
+                        "default": "eid",
+                        "enum": [
+                            "eid",
+                            "oid",
+                            "selfie"
+                        ]
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/EnrolResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                },
+                "x-redoc-order": 2
+            }
+        },
+        "/users/{user_id}/suspend": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Suspend a user's persona from accessing a service provider",
+                "description": "Suspend a user's persona from accessing a service provider",
+                "operationId": "userSuspend",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "description": "The asserted identifier of the user",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "claim_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ChangeStateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Access Denied",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "oauth2": [
+                            "user-write-status"
+                        ]
+                    }
+                ],
+                "x-redoc-order": 2
+            }
+        },
+        "/claim/enrol/validate": {
+            "post": {
+                "tags": [
+                    "Enrol"
+                ],
+                "summary": "Validate the enrolment was successful and activate the user",
+                "description": "Validate the enrolment was successful and activate the user.\n\nThis endpoint can only be called ONCE after a full end to end transaction has been completed. Subsequent calls will\nreturn a 400. This end-point will also return 400 if it is called before video streaming finishes.\n\nNote that without this endpoint being called the user will not be activated and therefore will be unable to use iProov\nunless they were enrolled using the photo enrol API.",
+                "operationId": "userEnrolValidate",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "validate_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/EnrolValidateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ClaimValidateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Access Denied",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                },
+                "x-redoc-order": 3
+            }
+        },
+        "/users/{existing_user_id}": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get a user's persona for a service provider",
+                "description": "Get a user's persona for a service provider",
+                "operationId": "userGet",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "existing_user_id",
+                        "in": "path",
+                        "description": "The asserted identifier of the user",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Access Denied",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "oauth2": [
+                            "user-read"
+                        ]
+                    }
+                ],
+                "x-redoc-order": 4
+            },
+            "put": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Update a user's identifier for a service provider",
+                "description": "Update a user's identifier for a service provider. Note one (or both) of name and new user id is required.",
+                "operationId": "userUpdate",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "existing_user_id",
+                        "in": "path",
+                        "description": "The asserted identifier of the user",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "claim_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Access Denied",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "oauth2": [
+                            "user-write"
+                        ]
+                    }
+                ],
+                "x-redoc-order": 3
+            },
+            "delete": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Deletes a user's persona from a service provider",
+                "description": "Deletes a user's persona from a service provider",
+                "operationId": "userDelete",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "existing_user_id",
+                        "in": "path",
+                        "description": "The asserted identifier of the user",
+                        "required": true,
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "c9d437ac-5a8d-4d05-9cf3-d61c6ae3aa57"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Client Error",
+                        "schema": {
+                            "$ref": "#/definitions/ClientErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Access Denied",
+                        "schema": {
+                            "$ref": "#/definitions/InvalidCredentialErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error",
+                        "schema": {
+                            "$ref": "#/definitions/ServerErrorResponse"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "oauth2": [
+                            "user-write"
+                        ]
+                    }
+                ],
+                "x-redoc-order": 5
+            }
+        }
+    },
+    "definitions": {
+        "ErrorResponse": {
+            "description": "The Error response contains a error constant which can be used to split up responses and can be\nconverted to translatable error messages. The error description returns a more descriptive error response that is\nlargely designed for developers to get detailed information for failures.",
+            "required": [
+                "error",
+                "error_description"
+            ],
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "error_description": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ClientErrorResponse": {
+            "description": "Missing data in the request, or the state of the requested entity object is such that the operation could not succeed.",
+            "required": [
+                "error",
+                "error_description"
+            ],
+            "properties": {
+                "error": {
+                    "description": "\n - `invalid_agent`: **DEPRECATED**.\n - `invalid_user_id`: Malformed, illegal characters in the user_id, missing, or non-existent user_id given.\n     - Regex: `[a-zA-Z0-9'\\+_@\\.-]{1,256}`.\n\n - `invalid_token`: An invalid token was provided in the body.\n     - Ensure the correct claim token is passed from the POST /claim/enrol/token or POST /claim/verify/token calls.\n     - Ensure the token is incorrectly reused. For an Enrol Capture call, once an image has been **registered** against a token, it cannot be called again.\n     - Attempted to validate a claim token that was previously validated.\n     - Attempted to validate a claim token before video imagery finished streaming.\n\n - `invalid_validation`: The username does not match the username associated with the claim token, or the supplied `risk_profile` does not match the stored profile.\n     - Ensure the correct `user_id` and `risk_profile` are used.\n\n - `invalid_reason`: Malformed, illegal characters in `reason` parameter.\n     - Regex: `^[a-zA-Z0-9_.:=()\u2019\\'\\\"/\\s]{1,800}$`.\n\n - `invalid_risk_appetite`: Invalid risk profile specified, or risk profiles have not been enabled for your service provider.\n   If risk profiles are enabled, then it could be one of the following reasons:\n     - `risk_profile` missing in request.\n     - Malformed `risk_profile` in request:\n         - Regex: `^[a-zA-Z0-9_-]{0,100}$`.\n     - The given `risk_profile` doesn't exist.\n\n   Check the risk profile name is correct: https://portal.iproov.com/documentation/Optional_features/Risk_Profiles.\n   Speak to your Customer Success team to enable Risk Profiles on your Service Provider.\n\n - `no_face_found`: No face found in enrolment image. Please try again with a photo with a face in it.\n - `invalid_grant`: Malformed, or missing `grant_type`. Correct the `grant_type` field.\n     - Regex: `^[a-zA-Z0-9_\\-.]{0,30}$`.\n\n - `invalid_request`: Malformed, or invalid IPv4 address given in `ip` field, or missing `grant_type` parameter.\n - `invalid_client`: Invalid, or missing basicAuth credentials for the given API key/Service Provider when requesting\n   OAuth `access_token`. Provide the correct credentials/API key - defined within your Service Provider. A key rotation\n   may have occurred.\n - `invalid_scope`: Malformed `scope` parameter in request.\n     - Regex: `^[a-zA-Z0-9_\\-.]{0,100}$`.\n\n - `unsupported_grant_type`: The request's `grant_type` parameter value is not `client_credentials`.\n - `missing_data`: Missing `resource`, `reason` or `token` parameter/value in request body.\n - `no_user`: The given `user_id` or username doesn't exist.\n - `inactive_user`: User is in the wrong state (should have an Active state). Ensure the user is not suspected (User management API).\n - `invalid_enrol_image`: Missing image attachment in multipart form data. Ensure the image is appended to the multipart form body correctly\n - `invalid_source`: The `source` request parameter value must be one of `oid`, `eid` or `selfie`.\n - `already_enrolled`: The given username or `user_id` has already enrolled. Did you mean to conduct a verify transaction?\n   If a re-enrol is required, then either pass a new user_id or use the User Management API to delete the user and\n   request a new enrol claim token.\n - `invalid_key`: Missing or incorrect API Key. Check your API Key is correct:\n     1. Log into the iPortal.\n     2. Select your Service Provider.\n     3. Copy your API key.\n     4. Ensure your API Key and Secret are for the correct service provider\n",
+                    "type": "string",
+                    "enum": [
+                        "invalid_agent",
+                        "invalid_user_id",
+                        "invalid_token",
+                        "invalid_validation",
+                        "invalid_reason",
+                        "invalid_risk_appetite",
+                        "no_face_found",
+                        "invalid_grant",
+                        "invalid_request",
+                        "invalid_client",
+                        "invalid_scope",
+                        "unsupported_grant_type",
+                        "missing_data",
+                        "no_user",
+                        "inactive_user",
+                        "invalid_enrol_image",
+                        "invalid_source",
+                        "already_enrolled",
+                        "invalid_key"
+                    ]
+                },
+                "error_description": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "InvalidCredentialErrorResponse": {
+            "description": "One of: invalid OAuth token, expired OAuth token, invalid credentials, API Key and/or Secret is\n * missing, malformed, or incorrect.",
+            "required": [
+                "error",
+                "error_description"
+            ],
+            "properties": {
+                "error": {
+                    "description": "\n - `invalid_key`: Missing or incorrect API Key. Check your API Key is correct:\n     1. Log into the iPortal.\n     2. Select your Service Provider.\n     3. Copy your API key.\n     4. Ensure your API Key and Secret are for the correct service provider\n - `invalid_oauth`: Missing OAuth `access_token`.\n     - Call POST /{api_key}/access_token to obtain a new OAuth Access token. Access tokens expire after 1 hr or 50 requests.\n - `invalid_token`: Invalid OAuth `access_token`.\n     - Call POST /{api_key}/access_token to obtain a new OAuth Access token. Access tokens expire after 1 hr or 50 requests.\n - `token_quota_exceeded`: 50/50 Oauth user requests used.\n     - Call POST /{api_key}/access_token to obtain a new OAuth Access token. Access tokens expire after 1 hr or 50 requests.",
+                    "type": "string",
+                    "enum": [
+                        "invalid_key",
+                        "invalid_oauth",
+                        "token_quota_exceeded"
+                    ]
+                },
+                "error_description": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "RateLimitExceededResponse": {
+            "description": "Server Error",
+            "required": [
+                "error",
+                "error_description"
+            ],
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "enum": [
+                        "too_many_requests"
+                    ]
+                },
+                "error_description": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ServerErrorResponse": {
+            "description": "Server Error",
+            "required": [
+                "error",
+                "error_description"
+            ],
+            "properties": {
+                "error": {
+                    "description": "Generic iProov error code. If you receive this error code frequently please contact your customer success team or support@iproov.com.",
+                    "type": "string",
+                    "enum": [
+                        "server_error"
+                    ]
+                },
+                "error_description": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "AvailabilityResponse": {
+            "required": [
+                "up"
+            ],
+            "properties": {
+                "up": {
+                    "description": "Whether iProov service is available or not.",
+                    "type": "boolean",
+                    "example": true
+                }
+            },
+            "type": "object"
+        },
+        "EnrolResponse": {
+            "required": [
+                "success",
+                "token",
+                "user_id"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "31706131726336496d655177346e55503279616b69547344446e5258684c7542"
+                },
+                "user_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "c9d437ac-5a8d-4d05-9cf3-d61c6ae3aa57"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            },
+            "type": "object"
+        },
+        "ServerClaimRequest": {
+            "required": [
+                "api_key",
+                "secret",
+                "resource",
+                "user_id"
+            ],
+            "properties": {
+                "api_key": {
+                    "description": "The API key of the service provider",
+                    "type": "string"
+                },
+                "secret": {
+                    "description": "The API secret for the service provider",
+                    "type": "string",
+                    "format": "password"
+                },
+                "resource": {
+                    "description": "The resource being accessed (e.g. URL)",
+                    "type": "string"
+                },
+                "assurance_type": {
+                    "description": "The assurance type of the claim",
+                    "type": "string",
+                    "default": "genuine_presence",
+                    "enum": [
+                        "genuine_presence",
+                        "liveness"
+                    ]
+                },
+                "user_id": {
+                    "description": "The asserted identifier of the user.",
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "c9d437ac-5a8d-4d05-9cf3-d61c6ae3aa57"
+                },
+                "risk_profile": {
+                    "description": "The pre-defined risk profile to use for this claim.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ClaimResponse": {
+            "required": [
+                "fallback",
+                "token",
+                "primary",
+                "user_id",
+                "pod"
+            ],
+            "properties": {
+                "fallback": {
+                    "description": "The fallback gives relevant fallback information. It contains a 'type' key and a 'message' key\nthat provides more information about the fallback to be optionally displayed to the user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FallbackDefinition"
+                    }
+                },
+                "token": {
+                    "description": "The token should be referenced if there are issues with an individuals claim and is used as a\ntransaction id. Must be claimed within 2 mins, otherwise it expires.",
+                    "type": "string",
+                    "example": "31706131726336496d655177346e55503279616b69547344446e5258684c7542"
+                },
+                "primary": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "The user id of the user associated with the token. Null if no user is associated with the\ntoken.",
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "c9d437ac-5a8d-4d05-9cf3-d61c6ae3aa57"
+                },
+                "pod": {
+                    "description": "The pod that will be used for the claim.",
+                    "type": "string",
+                    "example": "edge02.eu4"
+                },
+                "redirect_domain": {
+                    "description": "If the service provider has a dedicated landing page hosted at iProov this will contain the URL to redirect to.",
+                    "type": "string",
+                    "example": "This field is deprecated!",
+                    "deprecated": true
+                },
+                "risk_profile": {
+                    "description": "If the service provider has specified a risk profile then it will be used.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "FallbackDefinition": {
+            "required": [
+                "type",
+                "message"
+            ],
+            "properties": {
+                "type": {
+                    "description": "The type of the fallback to be used",
+                    "type": "string",
+                    "example": "Info"
+                },
+                "message": {
+                    "description": "The message to show the user about the fallback",
+                    "type": "string",
+                    "example": "Sorry, only iProov is available"
+                }
+            },
+            "type": "object"
+        },
+        "InvalidAssuranceTypeResponse": {
+            "description": "",
+            "required": [
+                "error",
+                "error_description"
+            ],
+            "properties": {
+                "error": {
+                    "description": "\n - `assurance_type`: The given, or implied `assurance_type` is not allowed. With the given SP key if the given\n `assurance_type` is:\n    - GPA when only LA allowed.\n    - LA when only GPA allowed.\n    - Unspecified (Default: GPA) and only LA allowed.\n - `disabled_service_provider`: The service provider is disabled. Please contact customer success to enable your service provider credentials.",
+                    "type": "string",
+                    "enum": [
+                        "invalid_assurance_type",
+                        "disabled_service_provider"
+                    ],
+                    "example": [
+                        "invalid_assurance_type",
+                        "disabled_service_provider"
+                    ]
+                },
+                "error_description": {
+                    "type": "string",
+                    "example": [
+                        "This assurance_type is not enabled for your service provider",
+                        "The service provider is disabled"
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "ClaimValidateResponse": {
+            "required": [
+                "passed",
+                "token",
+                "type"
+            ],
+            "properties": {
+                "passed": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "token": {
+                    "type": "string",
+                    "example": "31706131726336496d655177346e55503279616b69547344446e5258684c7542"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "verify"
+                },
+                "frame_available": {
+                    "description": "Present and True if there is frame available for returning to the integrator.",
+                    "type": "string",
+                    "example": false
+                },
+                "frame": {
+                    "description": "If `frame_available` is present and True, a base64 encoded PNG format representation of the\n frame.\n\n Is enabled on a per service provider basis in iPortal.",
+                    "type": "string",
+                    "format": "PNG"
+                },
+                "frame_jpeg": {
+                    "description": "If `frame_available` is present and True, a base64 encoded representation of the frame in JPEG\n format.\n\n Is enabled on a per service provider basis. Contact support@iproov.com to enable this.",
+                    "type": "string",
+                    "format": "JPG"
+                },
+                "reason": {
+                    "description": "The failure reason (enabled on a per service provider basis)",
+                    "type": "string",
+                    "example": "Please Keep Still"
+                },
+                "risk_profile": {
+                    "description": "The pre-defined risk profile to use for this claim",
+                    "type": "string"
+                },
+                "assurance_type": {
+                    "description": "Which assurance type was utilized by the transaction",
+                    "type": "string",
+                    "default": "genuine_presence",
+                    "enum": [
+                        "genuine_presence",
+                        "liveness"
+                    ]
+                },
+                "signals": {
+                    "description": "An additional summary about the claim. Please speak to Customer Support or email\n support@iproov.com to enable this. Please note, this request may take up to 2 weeks to action.",
+                    "properties": {
+                        "anti_spoofing": {
+                            "description": "Whether the claim passed antispoofing biometric tests. `null` value means biometric test\n results aren't available, most likely due to an error.",
+                            "properties": {
+                                "passed": {
+                                    "type": [
+                                        "boolean",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "matching": {
+                            "description": "Whether the claim passed face matching. Only relevant when video verifying. `null` value\n means the face matching result isn't available, most likely due to an error.",
+                            "properties": {
+                                "passed": {
+                                    "type": [
+                                        "boolean",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "multiple_faces": {
+                            "description": "A summary of multiple/single face detection results.",
+                            "properties": {
+                                "single_face": {
+                                    "properties": {
+                                        "found": {
+                                            "description": "Whether exactly 1 face was found in the validate frame. `null` value means the\n signle face detection algorithm result isn't available, most likely due to an error.",
+                                            "type": [
+                                                "boolean",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "face_consistent": {
+                                    "properties": {
+                                        "passed": {
+                                            "description": "Whether the same face was detected in the video stream. This signal is\n relevant with LA transactions only at this time. `null` value means the consistent face detection algorithm result\n isn't available, most likely due to an error.",
+                                            "type": [
+                                                "boolean",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "return_frame_quality": {
+                            "description": "An image quality assessment of the returned frame. Only available when\n `on_validate_return_frame` is enabled.",
+                            "properties": {
+                                "blur": {
+                                    "description": "The quality of blur.",
+                                    "type": "string",
+                                    "default": "not_available",
+                                    "enum": [
+                                        "not_available",
+                                        "Good",
+                                        "Acceptable",
+                                        "Poor"
+                                    ]
+                                },
+                                "pose": {
+                                    "description": "The quality of pose.",
+                                    "type": "string",
+                                    "default": "not_available",
+                                    "enum": [
+                                        "not_available",
+                                        "Good",
+                                        "Acceptable",
+                                        "Poor"
+                                    ]
+                                },
+                                "lighting": {
+                                    "description": "The quality of lighting.",
+                                    "type": "string",
+                                    "default": "not_available",
+                                    "enum": [
+                                        "not_available",
+                                        "Good",
+                                        "Acceptable",
+                                        "Poor"
+                                    ]
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "EnrolValidateRequest": {
+            "type": "object",
+            "allOf": [
+                {
+                    "$ref": "#/definitions/ClaimValidateRequest"
+                },
+                {
+                    "properties": {
+                        "activate": {
+                            "description": "Activate the user's account (default: true).  User will be SUSPENDED if false.",
+                            "type": "boolean"
+                        }
+                    }
+                }
+            ]
+        },
+        "InvalidateClaimResponse": {
+            "required": [
+                "claim_aborted",
+                "user_informed"
+            ],
+            "properties": {
+                "claim_aborted": {
+                    "description": "True if claim was invalidated.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "user_informed": {
+                    "description": "True if the user was successfully informed that the claim has been invalidated.",
+                    "type": "boolean",
+                    "example": true
+                }
+            },
+            "type": "object"
+        },
+        "InvalidateClaimRequest": {
+            "required": [
+                "reason"
+            ],
+            "properties": {
+                "reason": {
+                    "description": "The reason to be displayed to the user for the invalidation of the claim",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "VerifyResponse": {
+            "required": [
+                "assurance_type",
+                "pass",
+                "token",
+                "type",
+                "source",
+                "user_id"
+            ],
+            "properties": {
+                "assurance_type": {
+                    "type": "string",
+                    "example": "image_verify"
+                },
+                "passed": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "token": {
+                    "type": "string",
+                    "example": "31706131726336496d655177346e55503279616b69547344446e5258684c7542"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "c9d437ac-5a8d-4d05-9cf3-d61c6ae3aa57"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "verify"
+                },
+                "source": {
+                    "type": "string",
+                    "example": "eid"
+                }
+            },
+            "type": "object"
+        },
+        "ClaimValidateRequest": {
+            "required": [
+                "api_key",
+                "secret",
+                "user_id",
+                "token",
+                "client"
+            ],
+            "properties": {
+                "api_key": {
+                    "description": "The API key of the service provider",
+                    "type": "string"
+                },
+                "secret": {
+                    "description": "The API secret for the service provider",
+                    "type": "string",
+                    "format": "password"
+                },
+                "user_id": {
+                    "description": "The asserted identifier of the user",
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "c9d437ac-5a8d-4d05-9cf3-d61c6ae3aa57"
+                },
+                "token": {
+                    "description": "The token for the claim",
+                    "type": "string",
+                    "example": "31706131726336496d655177346e55503279616b69547344446e5258684c7542"
+                },
+                "client": {
+                    "description": "Fingerprint or client identifier of the device making the request (e.g. User Agent)",
+                    "type": "string"
+                },
+                "risk_profile": {
+                    "description": "The pre-defined risk profile to use for this claim",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "AuthTokenResponse": {
+            "description": "A OAuth2 standard compliant response giving an OAuth access token. Usable for up to 50 requests",
+            "required": [
+                "access_token",
+                "token_type",
+                "expires_in"
+            ],
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "zAVFcpZ1Lxa5DeFnIbOotU4QjX7GEYuonoEj2WY2VygoJzCYhjEqiQqnNrVq"
+                },
+                "token_type": {
+                    "type": "string",
+                    "example": "Bearer"
+                },
+                "expires_in": {
+                    "type": "integer",
+                    "example": "3600"
+                },
+                "scope": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "user-read"
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "OAuthServerErrorResponse": {
+            "required": [
+                "error",
+                "error_description"
+            ],
+            "properties": {
+                "error": {
+                    "description": "\n - `invalid_key`: Missing or incorrect API Key. Check your API Key is correct:\n\n     1. Log into the iPortal.\n     2. Select your Service Provider.\n     3. Copy your API key.\n     4. Ensure your API Key and Secret are for the correct service provider.\n - `server_error`: Generic iProov error code. If you receive this error code frequently please contact your customer success team or support@iproov.com.",
+                    "type": "string",
+                    "enum": [
+                        "invalid_key",
+                        "server_error"
+                    ],
+                    "example": "invalid_key"
+                },
+                "error_description": {
+                    "type": "string",
+                    "example": "Invalid API Key"
+                }
+            },
+            "type": "object"
+        },
+        "ChangeStateRequest": {
+            "properties": {
+                "date_time": {
+                    "description": "The date from which the state change for the user is effective from (default: now)",
+                    "type": "string",
+                    "format": "date-time"
+                }
+            },
+            "type": "object"
+        },
+        "UserResponse": {
+            "description": "Contains a description of the user with User ID, Name, Status of the user, suspension and activated\ndate. ",
+            "required": [
+                "user_id",
+                "name",
+                "status"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "c9d437ac-5a8d-4d05-9cf3-d61c6ae3aa57"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "status": {
+                    "description": "A status of either 'inactive', 'active', 'suspended' or 'Deleted'.",
+                    "type": "string",
+                    "example": "active"
+                },
+                "suspension_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2016-04-16T16:06:05Z"
+                },
+                "activation_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2016-05-16T16:06:05Z"
+                }
+            },
+            "type": "object"
+        },
+        "UpdateUserRequest": {
+            "properties": {
+                "user_id": {
+                    "description": "The new identifier for the user",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name to display to the user when authenticating",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "securityDefinitions": {
+        "oauth2": {
+            "type": "oauth2",
+            "description": "OAuth2 is used for the Management and User APIs.",
+            "flow": "application",
+            "tokenUrl": "/{api_key}/access_token",
+            "scopes": {
+                "user-write": "Update the user object",
+                "user-write-status": "Update the status of a user",
+                "user-read": "Read the information of users"
+            }
+        },
+        "basicAuth": {
+            "type": "basic",
+            "description": "These can now be obtained via the iPortal - OAuth Username and OAuth password."
+        }
+    },
+    "tags": [
+        {
+            "name": "Enrol",
+            "description": "Enrol a user with iProov."
+        },
+        {
+            "name": "Verify",
+            "description": "Verify an enrolled user with iProov."
+        },
+        {
+            "name": "User",
+            "description": "iProov user management APIs."
+        },
+        {
+            "name": "Management",
+            "description": "iProov system management APIs."
+        }
+    ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "@unikyc/sdk",
+  "version": "1.0.0",
+  "description": "React SDK for UniKYC decentralized identity verification",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "kyc",
+    "identity",
+    "verification",
+    "blockchain",
+    "decentralized",
+    "react",
+    "sdk"
+  ],
+  "author": "UniKYC Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "dependencies": {
+    "lucide-react": "^0.542.0",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unikyc/unikyc"
+  },
+  "homepage": "https://github.com/unikyc/unikyc#readme",
+  "bugs": {
+    "url": "https://github.com/unikyc/unikyc/issues"
+  }
+}
