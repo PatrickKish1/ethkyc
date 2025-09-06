@@ -1,6 +1,7 @@
 import { ensResolver, EnsProfile } from '../ens/resolver'
 import { thresholdCrypto, KeyShare } from '../crypto/threshold'
 import { biometricVerification, BiometricVerificationResult } from '../auth/biometric'
+import { FaceDetectionResult } from '../../hooks/useFaceDetection'
 import { uploadFile } from '../storage/storacha'
 import { Randomness } from 'randomness-js'
 import { Blocklock, encodeCiphertextToSolidity, encodeCondition } from 'blocklock-js'
@@ -275,6 +276,81 @@ export class KycService {
         status: 'rejected',
         message: 'Failed to initiate KYC verification',
         errors: [error instanceof Error ? error.message : 'Unknown error'],
+      }
+    }
+  }
+
+  /**
+   * Process face detection result for KYC verification
+   */
+  async processFaceDetectionResult(
+    ensName: string,
+    faceResult: FaceDetectionResult,
+    type: 'enrol' | 'verify'
+  ): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      // Check if user has KYC record for verification
+      if (type === 'verify') {
+        const kycStatus = await this.checkKycStatus(ensName)
+        if (!kycStatus.hasKyc || kycStatus.status !== 'approved') {
+          return {
+            success: false,
+            message: 'KYC record not found or not approved'
+          }
+        }
+      }
+
+      // Validate face detection quality
+      if (faceResult.livenessScore < 0.7) {
+        return {
+          success: false,
+          message: 'Face detection quality too low. Please ensure good lighting and look directly at the camera.'
+        }
+      }
+
+      if (faceResult.confidence < 0.8) {
+        return {
+          success: false,
+          message: 'Face confidence too low. Please ensure your face is clearly visible.'
+        }
+      }
+
+      if (faceResult.antispoofScore < 0.5) {
+        return {
+          success: false,
+          message: 'Anti-spoofing check failed. Please ensure you are a real person.'
+        }
+      }
+
+      // Store face detection result
+      const faceData = {
+        livenessScore: faceResult.livenessScore,
+        confidence: faceResult.confidence,
+        antispoofScore: faceResult.antispoofScore,
+        emotion: faceResult.emotion,
+        age: faceResult.age,
+        gender: faceResult.gender,
+        timestamp: new Date().toISOString(),
+        type
+      }
+
+      // For enrolment, store the face template
+      if (type === 'enrol') {
+        // In a real implementation, you would store the face template securely
+        // For now, we'll just store the metadata
+        console.log('Face template stored for enrolment:', faceData)
+      }
+
+      return {
+        success: true,
+        message: 'Face verification successful',
+        data: faceData
+      }
+    } catch (error) {
+      console.error('Failed to process face detection result:', error)
+      return {
+        success: false,
+        message: 'Failed to process face verification'
       }
     }
   }

@@ -19,7 +19,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, CheckCircle, XCircle, AlertCircle, Shield, User, FileText, Camera } from 'lucide-react'
 import { ConnectWallet } from "@coinbase/onchainkit/wallet"
 import { DocumentUpload, DocumentFile } from './DocumentUpload'
-import { IProovVerification } from './IProovVerification'
+import { FaceDetection } from './FaceDetection'
 import { LoadingBackdrop } from '@/components/ui/loading-spinner'
 export interface KycButtonProps {
   identifier?: string
@@ -556,8 +556,8 @@ export function KycButton({
                     </AlertDescription>
                   </Alert>
 
-                  {/* iProov Face Verification Component */}
-                  <IProovVerification
+                  {/* Face Detection Component */}
+                  <FaceDetection
                     userId={address || ''}
                     type="verify"
                     onComplete={(result) => {
@@ -569,6 +569,9 @@ export function KycButton({
                       }
                     }}
                     onError={(error) => onKycError?.(error)}
+                    minLivenessScore={0.7}
+                    minConfidence={0.8}
+                    requiredFrames={5}
                   />
 
                   <div className="flex gap-2">

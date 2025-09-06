@@ -73,14 +73,16 @@ export default function Home() {
                   Try Demo
                 </Button>
               </Link>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="border-white/30 bg-white/10 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
-              >
-                View Documentation
-                <ArrowUpRight className="w-5 h-5 ml-2" />
-              </Button>
+              <Link href="/face-demo">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="border-white/30 bg-white/10 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
+                >
+                  Face Detection Demo
+                  <ArrowUpRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
             </div>
 
             {/* Stats */}
