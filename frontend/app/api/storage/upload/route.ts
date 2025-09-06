@@ -32,8 +32,9 @@ export async function POST(req: NextRequest) {
       cid, 
       gateway: getStorachaGatewayUrl(cid)
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "upload failed" }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : "upload failed";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

@@ -9,7 +9,6 @@ import {
   Wallet,
   WalletDropdown,
   WalletDropdownDisconnect,
-  WalletModal,
 } from "@coinbase/onchainkit/wallet";
 import {
   Name,
@@ -23,7 +22,6 @@ import {
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showModal, setShowModal] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {

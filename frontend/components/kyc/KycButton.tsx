@@ -5,27 +5,27 @@ import { useAccount } from 'wagmi'
 import { useKycStatus } from '@/hooks/useKycStatus'
 import { useKycVerification } from '@/hooks/useKycVerification'
 import { useEnsRegistration } from '@/hooks/useEnsRegistration'
-import { kycService } from '@/lib/kyc/service'
+// import { kycService } from '@/lib/kyc/service'
 import { ensResolver } from '@/lib/ens/resolver'
-import { biometricVerification } from '@/lib/auth/biometric'
+// import { biometricVerification } from '@/lib/auth/biometric'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+// import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle, XCircle, AlertCircle, Shield, User, FileText, Camera, X } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, Shield, User, X } from 'lucide-react'
 import { ConnectWallet } from "@coinbase/onchainkit/wallet"
 import { DocumentUpload, DocumentFile } from './DocumentUpload'
 import { IProovVerification } from './IProovVerification'
 import { LoadingBackdrop } from '@/components/ui/loading-spinner'
 export interface KycButtonProps {
   identifier?: string
-  onSuccess?: (result: any) => void
+  onSuccess?: (result: unknown) => void
   onError?: (error: string) => void
-  onKycComplete?: (status: any) => void
+  onKycComplete?: (status: unknown) => void
   onKycError?: (error: string) => void
   className?: string
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link'
@@ -35,16 +35,13 @@ export interface KycButtonProps {
 }
 
 export function KycButton({
-  identifier,
   onSuccess,
-  onError,
   onKycComplete,
   onKycError,
   className = '',
   variant = 'default',
   size = 'default',
   children,
-  showFullFlow = false,
 }: KycButtonProps) {
   const { address, isConnected } = useAccount()
   const [showModal, setShowModal] = useState(false)
@@ -66,39 +63,39 @@ export function KycButton({
   })
   const [selectedChainId, setSelectedChainId] = useState(84532) // Default to Base Sepolia
   const [documents, setDocuments] = useState<DocumentFile[]>([])
-  const [selfie, setSelfie] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('')
 
   // Hooks
   const { kycStatus, isLoading: statusLoading, refetch: refetchStatus } = useKycStatus(ensName)
-  const { initiateVerification, isInitiating, verificationResult, error, clearError } = useKycVerification()
-  const { registerEns, isRegistering, error: ensError, clearError: clearEnsError } = useEnsRegistration()
+  const { initiateVerification, isInitiating, error, clearError } = useKycVerification()
+  const { registerEns, isRegistering, clearError: clearEnsError } = useEnsRegistration()
 
   // Auto-detect ENS name when wallet connects
   useEffect(() => {
+    const detectEnsName = async () => {
+      if (!address) return
+      
+      try {
+        const name = await ensResolver.lookupAddress(address)
+        if (name) {
+          setEnsName(name)
+          // Auto-check KYC status
+          await refetchStatus()
+        } else {
+          // No ENS name found, suggest registration
+          console.log('No ENS name found for address, user can register one')
+        }
+      } catch (error) {
+        console.error('Failed to detect ENS name:', error)
+      }
+    }
+
     if (isConnected && address) {
       detectEnsName()
     }
-  }, [isConnected, address])
+  }, [isConnected, address, refetchStatus])
 
-  const detectEnsName = async () => {
-    if (!address) return
-    
-    try {
-      const name = await ensResolver.lookupAddress(address)
-      if (name) {
-        setEnsName(name)
-        // Auto-check KYC status
-        await refetchStatus()
-      } else {
-        // No ENS name found, suggest registration
-        console.log('No ENS name found for address, user can register one')
-      }
-    } catch (error) {
-      console.error('Failed to detect ENS name:', error)
-    }
-  }
 
   const handleOpenModal = async () => {
     clearError()
@@ -137,7 +134,7 @@ export function KycButton({
           setShowModal(true)
         }, 1000)
       }
-    } catch (error) {
+    } catch {
       setIsLoading(false)
       onKycError?.('Failed to check KYC status')
     }
@@ -212,7 +209,6 @@ export function KycButton({
         chainId: selectedChainId,
         documents: documents.map(doc => doc.file), // Extract File objects
         personalInfo,
-        selfie: selfie || undefined,
       }
 
       const result = await initiateVerification(request)
@@ -229,30 +225,30 @@ export function KycButton({
     }
   }
 
-  const handleBiometricVerification = async () => {
-    if (!ensName) return
+  // const handleBiometricVerification = async () => {
+  //   if (!ensName) return
 
-    try {
-      // Generate challenge and verify biometric
-      const challenge = biometricVerification.generateChallenge()
-      const result = await kycService.verifyBiometric({
-        type: 'face_id',
-        challenge,
-        userId: address || '',
-        ensName,
-      })
+  //   try {
+  //     // Generate challenge and verify biometric
+  //     const challenge = biometricVerification.generateChallenge()
+  //     const result = await kycService.verifyBiometric({
+  //       type: 'face_id',
+  //       challenge,
+  //       userId: address || '',
+  //       ensName,
+  //     })
 
-      if (result.verified) {
-        setCurrentStep('complete')
-        onKycComplete?.({ status: 'verified', result })
-      } else {
-        onKycError?.(result.error || 'Biometric verification failed')
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      onKycError?.(errorMessage)
-    }
-  }
+  //     if (result.verified) {
+  //       setCurrentStep('complete')
+  //       onKycComplete?.({ status: 'verified', result })
+  //     } else {
+  //       onKycError?.(result.error || 'Biometric verification failed')
+  //     }
+  //   } catch (error) {
+  //     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+  //     onKycError?.(errorMessage)
+  //   }
+  // }
 
   const handleDocumentsChange = (docs: DocumentFile[]) => {
     setDocuments(docs)

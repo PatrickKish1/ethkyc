@@ -32,9 +32,9 @@ async function getOrCreateSid(): Promise<string> {
 }
 
 // In-memory fallback for local dev without Redis
-const memoryStore = new Map<string, any>();
+const memoryStore = new Map<string, unknown>();
 
-async function kvSet(key: string, value: any, ttlSeconds?: number) {
+async function kvSet(key: string, value: unknown, ttlSeconds?: number) {
   if (redis) {
     if (ttlSeconds) {
       await redis.set(key, value, { ex: ttlSeconds });
@@ -46,7 +46,7 @@ async function kvSet(key: string, value: any, ttlSeconds?: number) {
   memoryStore.set(key, { value, expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1000 : undefined });
 }
 
-async function kvGet<T = any>(key: string): Promise<T | null> {
+async function kvGet<T = unknown>(key: string): Promise<T | null> {
   if (redis) {
     return ((await redis.get(key)) as T) ?? null;
   }

@@ -9,8 +9,9 @@ export async function POST(req: NextRequest) {
   try {
     const session = await verifySiwe(message, signature, req);
     return NextResponse.json({ success: true, session });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e?.message || "verify failed" }, { status: 422 });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : "verify failed";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 422 });
   }
 }
 

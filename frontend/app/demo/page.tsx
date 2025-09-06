@@ -18,7 +18,7 @@ export default function DemoPage() {
   const [ensName, setEnsName] = useState('')
   const { kycStatus, isLoading, refetch } = useKycStatus(ensName)
 
-  const handleKycComplete = (status: any) => {
+  const handleKycComplete = (status: unknown) => {
     console.log('KYC completed:', status)
     // Refresh status
     refetch()
@@ -47,7 +47,7 @@ export default function DemoPage() {
 
   return (
     <main>
-      <Header className="bg-gray-300" />
+      <Header />
       <div className="container mx-auto px-4 py-8 max-w-4xl mt-14">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">UniKYC Demo</h1>

@@ -73,7 +73,7 @@ export function IProovVerification({ userId, type, onComplete, onError }: IProov
       setStatus('processing')
     })
 
-    iproovElement.addEventListener('passed', async (event: any) => {
+    iproovElement.addEventListener('passed', async () => {
       try {
         const result = await iproovService.validateResult(token.token, type)
         setStatus('complete')
@@ -86,15 +86,17 @@ export function IProovVerification({ userId, type, onComplete, onError }: IProov
       }
     })
 
-    iproovElement.addEventListener('failed', (event: any) => {
-      const reason = event.detail?.reason || 'Face verification failed'
+    iproovElement.addEventListener('failed', (event: Event) => {
+      const customEvent = event as CustomEvent
+      const reason = customEvent.detail?.reason || 'Face verification failed'
       setError(reason)
       setStatus('error')
       onError(reason)
     })
 
-    iproovElement.addEventListener('error', (event: any) => {
-      const reason = event.detail?.reason || 'An error occurred during verification'
+    iproovElement.addEventListener('error', (event: Event) => {
+      const customEvent = event as CustomEvent
+      const reason = customEvent.detail?.reason || 'An error occurred during verification'
       setError(reason)
       setStatus('error')
       onError(reason)

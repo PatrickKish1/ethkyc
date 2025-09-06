@@ -1,7 +1,7 @@
 import { create } from "@storacha/client";
 
-let clientPromise: Promise<any> | null = null;
-let currentSpace: any = null;
+let clientPromise: Promise<unknown> | null = null;
+let currentSpace: unknown = null;
 
 export async function getStorachaClient() {
   if (!clientPromise) {

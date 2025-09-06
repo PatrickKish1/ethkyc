@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
 import { kycService } from '@/lib/kyc/service'
-import { kycStorage, KycRecord } from '@/lib/ens/resolver'
+import { kycStorage } from '@/lib/ens/resolver'
 import { ensResolver } from '@/lib/ens/resolver'
-import type { KycStatus } from '@/lib/kyc/types'
+import type { KycStatus, KycRecord } from '@/lib/kyc/types'
 
 export interface UseKycStatusReturn {
   kycStatus: KycStatus | null
@@ -48,7 +48,47 @@ export function useKycStatus(identifier?: string): UseKycStatusReturn {
       const status: KycStatus = {
         hasKyc: kycResult.hasKyc,
         status: kycResult.status || 'none',
-        record: kycResult.record
+        record: kycResult.record ? {
+          ...kycResult.record,
+          status: kycResult.record.status === 'approved' ? 'active' : 
+                  kycResult.record.status === 'expired' ? 'expired' : 'revoked',
+          verificationData: {
+            firstName: '',
+            lastName: '',
+            dateOfBirth: '',
+            nationality: '',
+            address: {
+              street: '',
+              city: '',
+              state: '',
+              country: '',
+              postalCode: ''
+            },
+            documents: [],
+            verificationStatus: kycResult.record.status as 'pending' | 'approved' | 'rejected' | 'expired',
+            verificationDate: kycResult.record.createdAt,
+            expiryDate: kycResult.record.verificationData.expiryDate,
+            kycProvider: 'manual',
+            providerReference: kycResult.record.id
+          },
+          thresholdScheme: {
+            totalKeys: 5,
+            requiredKeys: 3,
+            keys: [],
+            encryptedData: '',
+            createdAt: kycResult.record.createdAt
+          },
+          blocklockData: kycResult.record.blocklockData ? {
+            ...kycResult.record.blocklockData,
+            chainId: 1 // Default to mainnet
+          } : undefined,
+          updatedAt: kycResult.record.createdAt,
+          metadata: {
+            version: '1.0.0',
+            schema: 'kyc-v1',
+            tags: ['kyc', 'verification']
+          }
+        } : undefined
       }
       
       setKycStatus(status)

@@ -1,4 +1,4 @@
-import { createPublicClient, http, getAddress, isAddress, createWalletClient, custom } from 'viem'
+import { createPublicClient, http, isAddress } from 'viem'
 import { mainnet } from 'wagmi/chains'
 import { normalize } from 'viem/ens'
 import { ensResolverAddress, ABI } from '@/contracts/abi'
@@ -195,7 +195,7 @@ class EnsResolver {
   async registerEnsName(
     label: string, 
     owner: `0x${string}`,
-    walletClient: any
+    walletClient: unknown
   ): Promise<{ success: boolean; txHash?: string; error?: string }> {
     try {
       const normalizedLabel = normalize(label)
@@ -268,7 +268,7 @@ class EnsResolver {
    */
   async getOrCreateEnsForKyc(
     address: `0x${string}`,
-    walletClient?: any
+    walletClient?: unknown
   ): Promise<{ ensName: string; isNew: boolean; txHash?: string }> {
     try {
       // First, check if user already has an ENS name
@@ -325,7 +325,7 @@ export interface KycRecord {
   }
   randomnessId?: string
   blocklockData?: {
-    ciphertext: any
+    ciphertext: unknown
     condition: string
     unlockBlockHeight: number
   }

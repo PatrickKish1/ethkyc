@@ -20,15 +20,16 @@ export default function VerifyPage() {
     if (url) setReturnUrl(url)
   }, [searchParams])
 
-  const handleSuccess = (result: any) => {
+  const handleSuccess = (result: unknown) => {
     // Send success message to parent window
     if (window.opener) {
+      const resultData = result as { status?: string; recordId?: string }
       window.opener.postMessage({
         type: 'UNIKYC_COMPLETE',
         result: {
           success: true,
-          status: result.status,
-          recordId: result.recordId,
+          status: resultData.status,
+          recordId: resultData.recordId,
           message: 'KYC verification completed successfully'
         }
       }, '*')
