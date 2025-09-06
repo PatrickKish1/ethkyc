@@ -143,37 +143,26 @@ export class KycService {
         }
       }
 
-      // Upload documents to Filecoin
-      const documentUploads = await Promise.all(
-        request.documents.map(async (document) => {
-          try {
-            const result = await uploadFile(document)
-            return {
-              type: 'passport' as const, // Default type, should be determined from document
-              fileId: result,
-              fileName: document.name,
-              fileSize: document.size,
-              mimeType: document.type,
-              uploadedAt: new Date().toISOString(),
-              verified: false,
-            }
-          } catch (error) {
-            console.error(`Failed to upload document ${document.name}:`, error)
-            throw error
-          }
-        })
-      )
+      // Store document info without uploading to Storacha for now
+      const documentUploads = request.documents.map((document, index) => {
+        // Generate temporary file ID
+        const tempFileId = `temp_${Date.now()}_${index}_${document.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+        
+        return {
+          type: 'passport' as const, // Default type, should be determined from document
+          fileId: tempFileId,
+          fileName: document.name,
+          fileSize: document.size,
+          mimeType: document.type,
+          uploadedAt: new Date().toISOString(),
+          verified: false,
+        }
+      })
 
-      // Upload selfie if provided
+      // Store selfie info without uploading to Storacha for now
       let selfieFileId: string | undefined
       if (request.selfie) {
-        try {
-          const result = await uploadFile(request.selfie)
-          selfieFileId = result
-        } catch (error) {
-          console.error('Failed to upload selfie:', error)
-          // Continue without selfie
-        }
+        selfieFileId = `temp_selfie_${Date.now()}_${request.selfie.name.replace(/[^a-zA-Z0-9]/g, '_')}`
       }
 
       // Create KYC verification data
@@ -192,7 +181,8 @@ export class KycService {
 
       // Generate threshold cryptography keys
       const thresholdConfig = { totalKeys: 5, requiredKeys: 3 }
-      const masterKey = 'master-key-' + Date.now().toString() // Temporary implementation
+      // Generate a proper 32-byte hex key for AES-256
+      const masterKey = require('crypto').randomBytes(32).toString('hex')
       const keyShares = thresholdCrypto.generateKeyShares(masterKey, thresholdConfig)
 
       // Encrypt verification data
@@ -512,7 +502,16 @@ export class KycService {
       const stored = localStorage.getItem(this.storageKey)
       const records: Record<string, KycRecord> = stored ? JSON.parse(stored) : {}
       records[record.ensName] = record
-      localStorage.setItem(this.storageKey, JSON.stringify(records))
+      
+      // Custom serializer to handle BigInt values
+      const serializedRecords = JSON.stringify(records, (key, value) => {
+        if (typeof value === 'bigint') {
+          return value.toString()
+        }
+        return value
+      })
+      
+      localStorage.setItem(this.storageKey, serializedRecords)
     } catch (error) {
       console.error('Failed to store KYC record:', error)
       throw error
@@ -577,13 +576,13 @@ export class KycService {
    */
   async generateRandomKycId(chainId: number): Promise<string> {
     try {
-      const randomness = this.getRandomnessInstance(chainId)
-      const response = await randomness.requestRandomness({})
-      return response.toString()
+      // For now, use crypto.randomUUID as primary method
+      // Can integrate dcipher randomness later when signer is available
+      return crypto.randomUUID()
     } catch (error) {
       console.error('Failed to generate random KYC ID:', error)
-      // Fallback to crypto.randomUUID if dcipher fails
-      return crypto.randomUUID()
+      // Fallback to timestamp-based ID
+      return `kyc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     }
   }
 

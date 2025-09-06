@@ -2,19 +2,18 @@
 "use client"
 
 import React, { useState, useCallback } from 'react'
+import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Upload, FileText, CheckCircle, X } from 'lucide-react'
 import { uploadFile } from '@/lib/storage/storacha'
-import Image from 'next/image'
 
 export interface DocumentFile {
   file: File
-  type: 'passport' | 'drivers_license' | 'national_id' | 'utility_bill' | 'bank_statement'
+  type: DocumentType
   preview: string
   cid?: string
 }
@@ -23,9 +22,10 @@ interface DocumentUploadProps {
   onDocumentsChange: (documents: DocumentFile[]) => void
   onError: (error: string) => void
   maxFiles?: number
+  email?: string
 }
 
-export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: DocumentUploadProps) {
+export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email }: DocumentUploadProps) {
   const [documents, setDocuments] = useState<DocumentFile[]>([])
   const [uploading, setUploading] = useState<boolean>(false)
   const [dragOver, setDragOver] = useState<boolean>(false)
@@ -55,7 +55,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
       
       const docFile: DocumentFile = {
         file,
-        type: (documentType as any) || 'passport',
+        type: (documentType as DocumentType) || 'passport',
         preview
       }
 
@@ -74,19 +74,20 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
 
     setUploading(true)
     try {
-      const uploadedDocs = await Promise.all(
-        documents.map(async (doc) => {
-          if (doc.cid) return doc // Already uploaded
-          
-          const cid = await uploadFile(doc.file)
-          return { ...doc, cid }
-        })
-      )
+      // For now, just save documents in state without uploading to Storacha
+      // Generate temporary CIDs for UI consistency
+      const uploadedDocs = documents.map((doc, index) => {
+        if (doc.cid) return doc // Already processed
+        
+        // Generate a temporary CID-like identifier
+        const tempCid = `temp_${Date.now()}_${index}_${doc.file.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+        return { ...doc, cid: tempCid }
+      })
 
       setDocuments(uploadedDocs)
       onDocumentsChange(uploadedDocs)
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to upload documents')
+      onError(error instanceof Error ? error.message : 'Failed to process documents')
     } finally {
       setUploading(false)
     }
@@ -100,7 +101,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
 
   const updateDocumentType = (index: number, type: string) => {
     const updatedDocuments = documents.map((doc, i) => 
-      i === index ? { ...doc, type: type as any } : doc
+      i === index ? { ...doc, type: type as DocumentType } : doc
     )
     setDocuments(updatedDocuments)
     onDocumentsChange(updatedDocuments)
@@ -122,18 +123,25 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
     setDragOver(false)
   }, [])
 
+  const handleUploadAreaClick = useCallback(() => {
+    const fileInput = document.getElementById('document-upload') as HTMLInputElement
+    if (fileInput) {
+      fileInput.click()
+    }
+  }, [])
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Identity Documents</CardTitle>
         <CardDescription>
-          {`Upload your government-issued ID documents (passport, driver's license, national ID)`}
+          Upload your government-issued ID documents (passport, driver's license, national ID)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Upload Area */}
         <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
             dragOver 
               ? 'border-blue-500 bg-blue-50' 
               : 'border-gray-300 hover:border-gray-400'
@@ -141,6 +149,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
+          onClick={handleUploadAreaClick}
         >
           <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
           <div className="space-y-2">
@@ -156,11 +165,16 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
               className="hidden"
               id="document-upload"
             />
-            <Label htmlFor="document-upload">
-              <Button variant="outline" className="cursor-pointer">
-                Browse Files
-              </Button>
-            </Label>
+            <Button 
+              variant="outline" 
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleUploadAreaClick()
+              }}
+            >
+              Browse Files
+            </Button>
           </div>
         </div>
 
@@ -175,6 +189,8 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
                     <Image 
                       src={doc.preview} 
                       alt="Document preview" 
+                      width={48}
+                      height={48}
                       className="w-12 h-12 object-cover rounded"
                       width={48}
                       height={48}
@@ -200,7 +216,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="passport">Passport</SelectItem>
-                    <SelectItem value="drivers_license">{`Driver's License`}</SelectItem>
+                    <SelectItem value="drivers_license">Driver's License</SelectItem>
                     <SelectItem value="national_id">National ID</SelectItem>
                     <SelectItem value="utility_bill">Utility Bill</SelectItem>
                     <SelectItem value="bank_statement">Bank Statement</SelectItem>

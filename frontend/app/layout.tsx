@@ -13,7 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL;
   return {
     title: "UniKYC - Decentralized Identity Verification",
-    description: "Next-generation, decentralized, privacy-preserving identity system that combines KYC credentials with blockchain technology and threshold cryptography.",
+    description:
+      "Next-generation, decentralized, privacy-preserving identity system that combines KYC credentials with blockchain technology and threshold cryptography.",
     other: {
       "fc:frame": JSON.stringify({
         version: "next",
