@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle, XCircle, AlertCircle, Shield, User, FileText, Camera } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, AlertCircle, Shield, User, FileText, Camera, X } from 'lucide-react'
 import { ConnectWallet } from "@coinbase/onchainkit/wallet"
 import { DocumentUpload, DocumentFile } from './DocumentUpload'
 import { IProovVerification } from './IProovVerification'
@@ -53,6 +53,7 @@ export function KycButton({
   const [personalInfo, setPersonalInfo] = useState({
     firstName: '',
     lastName: '',
+    email: '',
     dateOfBirth: '',
     nationality: '',
     address: {
@@ -321,10 +322,20 @@ export function KycButton({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                KYC Verification
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  KYC Verification
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseModal}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               <CardDescription>
                 {currentStep === 'check' && 'Check your KYC status or start verification'}
                 {currentStep === 'kyc' && 'Complete your KYC verification'}
@@ -434,6 +445,16 @@ export function KycButton({
                     </div>
                   </div>
 
+                  <div>
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={personalInfo.email}
+                      onChange={(e) => setPersonalInfo(prev => ({ ...prev, email: e.target.value }))}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="dateOfBirth">Date of Birth</Label>
@@ -519,6 +540,7 @@ export function KycButton({
                     onDocumentsChange={handleDocumentsChange}
                     onError={handleDocumentError}
                     maxFiles={5}
+                    email={personalInfo.email}
                   />
 
                   {error && (
