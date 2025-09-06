@@ -20,10 +20,21 @@ import {
 } from "@coinbase/onchainkit/identity";
 
 
-export default function Header() {
+interface HeaderProps {
+  className?: string;
+}
+
+export default function Header({ className }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(true);
+
+  // Check if className contains background classes
+  const hasCustomBackground = className && (
+    className.includes('bg-') ||
+    className.includes('backdrop-') ||
+    className.includes('shadow-')
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,60 +46,55 @@ export default function Header() {
   }, []);
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/20' 
-          : 'bg-transparent'
-      }`}
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${hasCustomBackground
+        ? className
+        : (isScrolled
+          ? 'bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/20'
+          : 'bg-transparent')
+        } ${!hasCustomBackground && className ? className : ''}`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className={`p-2 rounded-lg transition-all duration-300 ${
-              isScrolled ? 'bg-blue-600' : 'bg-white/20 backdrop-blur-sm'
-            }`}>
+            <div className={`p-2 rounded-lg transition-all duration-300 ${isScrolled ? 'bg-blue-600' : 'bg-white/20 backdrop-blur-sm'
+              }`}>
               <Shield className="w-6 h-6 transition-colors duration-300 text-white" />
             </div>
-            <span className={`text-xl font-bold transition-colors duration-300 ${
-              isScrolled ? 'text-gray-900' : 'text-white'
-            }`}>
+            <span className={`text-xl font-bold transition-colors duration-300 ${isScrolled ? 'text-gray-900' : 'text-white'
+              }`}>
               UniKYC
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              href="#features" 
-              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${
-                isScrolled ? 'text-gray-700' : 'text-white/90'
-              }`}
+            <Link
+              href="#features"
+              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${isScrolled ? 'text-gray-700' : 'text-white/90'
+                }`}
             >
               Features
             </Link>
-            <Link 
-              href="#technology" 
-              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${
-                isScrolled ? 'text-gray-700' : 'text-white/90'
-              }`}
+            <Link
+              href="#technology"
+              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${isScrolled ? 'text-gray-700' : 'text-white/90'
+                }`}
             >
               Technology
             </Link>
-            <Link 
-              href="#about" 
-              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${
-                isScrolled ? 'text-gray-700' : 'text-white/90'
-              }`}
+            <Link
+              href="#about"
+              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${isScrolled ? 'text-gray-700' : 'text-white/90'
+                }`}
             >
               About
             </Link>
-            <Link 
-              href="/demo" 
-              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${
-                isScrolled ? 'text-gray-700' : 'text-white/90'
-              }`}
+            <Link
+              href="/demo"
+              className={`font-medium transition-colors duration-300 hover:text-blue-600 ${isScrolled ? 'text-gray-700' : 'text-white/90'
+                }`}
             >
               Demo
             </Link>
@@ -96,14 +102,13 @@ export default function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
-              className={`transition-all text-gray-700 duration-300 ${
-                isScrolled 
-                  ? 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-50' 
-                  : 'border-white/30 text-gray-700 hover:bg-white/10'
-              }`}
+              className={`transition-all text-gray-700 duration-300 ${isScrolled
+                ? 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-50'
+                : 'border-white/30 text-gray-700 hover:bg-white/10'
+                }`}
             >
               Documentation
             </Button>
@@ -120,7 +125,7 @@ export default function Header() {
                 </Identity>
                 <WalletDropdownDisconnect />
               </WalletDropdown>
-              {/* <WalletModal isOpen={showModal} onClose={() => {setShowModal(false)}} /> */}
+              <WalletModal isOpen={showModal} onClose={() => { setShowModal(false) }} />
             </Wallet>
           </div>
 
@@ -141,29 +146,29 @@ export default function Header() {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200/20">
             <nav className="flex flex-col space-y-4">
-              <Link 
-                href="#features" 
+              <Link
+                href="#features"
                 className="font-medium text-gray-700 hover:text-blue-600"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Features
               </Link>
-              <Link 
-                href="#technology" 
+              <Link
+                href="#technology"
                 className="font-medium text-gray-700 hover:text-blue-600"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Technology
               </Link>
-              <Link 
-                href="#about" 
+              <Link
+                href="#about"
                 className="font-medium text-gray-700 hover:text-blue-600"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 About
               </Link>
-              <Link 
-                href="/demo" 
+              <Link
+                href="/demo"
                 className="font-medium text-gray-700 hover:text-blue-600"
                 onClick={() => setIsMobileMenuOpen(false)}
               >

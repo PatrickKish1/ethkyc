@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/siwe";
 import { uploadFile, getStorachaGatewayUrl } from "@/lib/storage/storacha";

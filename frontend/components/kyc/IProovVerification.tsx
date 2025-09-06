@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -20,11 +22,7 @@ export function IProovVerification({ userId, type, onComplete, onError }: IProov
   const [error, setError] = useState<string | null>(null)
   const iproovRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    initializeIProov()
-  }, [userId, type])
-
-  const initializeIProov = async () => {
+  const initializeIProov = useCallback(async () => {
     try {
       setStatus('loading')
       setError(null)
@@ -42,7 +40,12 @@ export function IProovVerification({ userId, type, onComplete, onError }: IProov
       setStatus('error')
       onError(errorMessage)
     }
-  }
+  }, [userId, type, onError])
+
+  useEffect(() => {
+    initializeIProov()
+  }, [userId, type, initializeIProov])
+
 
   const startIProov = () => {
     if (!token || !iproovRef.current) return

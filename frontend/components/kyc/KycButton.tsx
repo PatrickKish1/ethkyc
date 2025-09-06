@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
 import { useKycStatus } from '@/hooks/useKycStatus'
 import { useKycVerification } from '@/hooks/useKycVerification'
@@ -74,14 +76,7 @@ export function KycButton({
   const { initiateVerification, isInitiating, verificationResult, error, clearError } = useKycVerification()
   const { registerEns, isRegistering, error: ensError, clearError: clearEnsError } = useEnsRegistration()
 
-  // Auto-detect ENS name when wallet connects
-  useEffect(() => {
-    if (isConnected && address) {
-      detectEnsName()
-    }
-  }, [isConnected, address])
-
-  const detectEnsName = async () => {
+  const detectEnsName = useCallback(async () => {
     if (!address) return
     
     try {
@@ -97,7 +92,15 @@ export function KycButton({
     } catch (error) {
       console.error('Failed to detect ENS name:', error)
     }
-  }
+  }, [address, refetchStatus])
+  
+  // Auto-detect ENS name when wallet connects
+  useEffect(() => {
+    if (isConnected && address) {
+      detectEnsName()
+    }
+  }, [isConnected, address, detectEnsName])
+
 
   const handleOpenModal = async () => {
     clearError()

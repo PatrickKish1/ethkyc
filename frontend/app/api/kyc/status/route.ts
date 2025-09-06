@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const kycService = new KycService()
-    const status = await kycService.getKycStatus(identifier)
+    const status = await kycService.checkKycStatus(identifier)
 
     return NextResponse.json({
       success: true,
@@ -21,9 +21,7 @@ export async function POST(request: NextRequest) {
         hasKyc: status.hasKyc,
         status: status.status,
         lastVerified: status.lastVerified,
-        expiryDate: status.expiryDate,
-        ensName: status.ensName,
-        address: status.address
+        expiryDate: status.expiryDate
       }
     })
   } catch (error) {

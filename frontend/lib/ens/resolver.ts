@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createPublicClient, http, getAddress, isAddress, createWalletClient, custom } from 'viem'
 import { mainnet } from 'wagmi/chains'
 import { normalize } from 'viem/ens'

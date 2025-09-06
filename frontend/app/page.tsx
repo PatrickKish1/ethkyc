@@ -205,9 +205,9 @@ export default function Home() {
                   Revolutionizing Identity Verification
                 </h2>
                 <p className="text-xl text-white/70 mb-8 leading-relaxed">
-                  UniKYC represents a paradigm shift in how we think about digital identity. 
+                  {`UniKYC represents a paradigm shift in how we think about digital identity. 
                   By combining blockchain technology with advanced cryptography, we've created 
-                  a system that's both more secure and more user-friendly than traditional solutions.
+                  a system that's both more secure and more user-friendly than traditional solutions.`}
                 </p>
                 
                 <div className="space-y-4">

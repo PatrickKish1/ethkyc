@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface KycDocument {
   type: 'passport' | 'drivers_license' | 'national_id' | 'utility_bill' | 'bank_statement'
   fileId: string // Filecoin CID

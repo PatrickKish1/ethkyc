@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { randomBytes, createCipheriv, createDecipheriv } from 'crypto'
 
 export interface KeyShare {

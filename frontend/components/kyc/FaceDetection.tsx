@@ -1,18 +1,18 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { 
-  Loader2, 
-  CheckCircle, 
-  XCircle, 
-  Camera, 
-  Eye, 
-  Shield, 
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Camera,
+  Eye,
+  Shield,
   Smile,
   User,
   Clock
@@ -30,10 +30,10 @@ interface FaceDetectionProps {
   requiredFrames?: number
 }
 
-export function FaceDetection({ 
-  userId, 
-  type, 
-  onComplete, 
+export function FaceDetection({
+  userId,
+  type,
+  onComplete,
   onError,
   minLivenessScore = 0.7,
   minConfidence = 0.8,
@@ -45,15 +45,14 @@ export function FaceDetection({
   const [frameCount, setFrameCount] = useState(0)
   const [averageLiveness, setAverageLiveness] = useState(0)
   const [averageConfidence, setAverageConfidence] = useState(0)
-  
+  const [isClient, setIsClient] = useState(false)
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   const {
-    isDetecting,
     isInitialized,
-    isWebcamReady,
     lastResult,
     detectionHistory,
     initialize,
@@ -65,17 +64,7 @@ export function FaceDetection({
     clearError
   } = useFaceDetection()
 
-  useEffect(() => {
-    initializeHuman()
-  }, [])
-
-  useEffect(() => {
-    if (lastResult) {
-      updateProgress()
-    }
-  }, [lastResult])
-
-  const initializeHuman = async () => {
+  const initializeHuman = useCallback(async () => {
     try {
       setStatus('loading')
       clearError()
@@ -86,72 +75,16 @@ export function FaceDetection({
       setStatus('error')
       onError(errorMessage)
     }
-  }
-
-  const startFaceDetection = async () => {
-    try {
-      setStatus('detecting')
-      setProgress(0)
-      setFrameCount(0)
-      setAverageLiveness(0)
-      setAverageConfidence(0)
-      clearHistory()
-      
-      await startDetection()
-      
-      // Set up video display
-      if (videoRef.current && containerRef.current) {
-        const video = videoRef.current
-        const container = containerRef.current
-        
-        // Get the video stream from the hook's internal video element
-        // This is a workaround since the hook manages its own video element
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, facingMode: 'user' }
-        })
-        
-        video.srcObject = stream
-        video.play()
-      }
-      
-      setInstructions('Look directly at the camera and keep your face centered')
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to start face detection'
-      setStatus('error')
-      onError(errorMessage)
-    }
-  }
-
-  const updateProgress = () => {
-    if (!lastResult || detectionHistory.length < 2) return
-
-    const recentResults = detectionHistory.slice(-requiredFrames)
-    const avgLiveness = recentResults.reduce((sum, r) => sum + r.livenessScore, 0) / recentResults.length
-    const avgConfidence = recentResults.reduce((sum, r) => sum + r.confidence, 0) / recentResults.length
-    
-    setAverageLiveness(avgLiveness)
-    setAverageConfidence(avgConfidence)
-    setFrameCount(recentResults.length)
-    
-    const progressValue = Math.min((recentResults.length / requiredFrames) * 100, 100)
-    setProgress(progressValue)
-    
-    // Check if we have enough good frames
-    if (recentResults.length >= requiredFrames && 
-        avgLiveness >= minLivenessScore && 
-        avgConfidence >= minConfidence) {
-      completeDetection()
-    }
-  }
-
-  const completeDetection = async () => {
+  }, [initialize, clearError, onError])
+  
+  const completeDetection = useCallback(async () => {
     try {
       setStatus('processing')
       setInstructions('Processing your verification...')
-      
+
       // Capture final frame
       const finalResult = await captureFrame()
-      
+
       if (finalResult && finalResult.success) {
         // Process the result through KYC service
         const processResult = await kycService.processFaceDetectionResult(
@@ -159,7 +92,7 @@ export function FaceDetection({
           finalResult,
           type
         )
-        
+
         if (processResult.success) {
           setStatus('complete')
           setInstructions('Verification completed successfully!')
@@ -175,7 +108,81 @@ export function FaceDetection({
       setStatus('error')
       onError(errorMessage)
     }
+  }, [captureFrame, userId, type, onComplete, onError])
+
+  const updateProgress = useCallback(() => {
+    if (!lastResult || detectionHistory.length < 2) return
+    
+    const recentResults = detectionHistory.slice(-requiredFrames)
+    const avgLiveness = recentResults.reduce((sum, r) => sum + r.livenessScore, 0) / recentResults.length
+    const avgConfidence = recentResults.reduce((sum, r) => sum + r.confidence, 0) / recentResults.length
+
+    setAverageLiveness(avgLiveness)
+    setAverageConfidence(avgConfidence)
+    setFrameCount(recentResults.length)
+
+    const progressValue = Math.min((recentResults.length / requiredFrames) * 100, 100)
+    setProgress(progressValue)
+    
+    // Check if we have enough good frames
+    if (recentResults.length >= requiredFrames &&
+      avgLiveness >= minLivenessScore &&
+      avgConfidence >= minConfidence) {
+      completeDetection()
+    }
+  }, [lastResult, detectionHistory, requiredFrames, minLivenessScore, minConfidence, completeDetection])
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  useEffect(() => {
+    if (isClient) {
+      initializeHuman()
+    }
+  }, [initializeHuman, isClient])
+
+  useEffect(() => {
+    if (lastResult) {
+      updateProgress()
+    }
+  }, [lastResult, updateProgress])
+
+
+  const startFaceDetection = async () => {
+    try {
+      setStatus('detecting')
+      setProgress(0)
+      setFrameCount(0)
+      setAverageLiveness(0)
+      setAverageConfidence(0)
+      clearHistory()
+
+      await startDetection()
+
+      // Set up video display
+      if (videoRef.current) {
+        const video = videoRef.current
+
+        // Get the video stream from the hook's internal video element
+        // This is a workaround since the hook manages its own video element
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: 'user' }
+        })
+
+        video.srcObject = stream
+        video.play()
+      }
+
+      setInstructions('Look directly at the camera and keep your face centered')
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start face detection'
+      setStatus('error')
+      onError(errorMessage)
+    }
   }
+
+
 
   const retryDetection = () => {
     stopDetection()
@@ -188,6 +195,15 @@ export function FaceDetection({
   }
 
   const renderStatus = () => {
+    if (!isClient) {
+      return (
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <p>Loading face detection...</p>
+        </div>
+      )
+    }
+
     switch (status) {
       case 'loading':
         return (
@@ -206,7 +222,7 @@ export function FaceDetection({
                 {type === 'enrol' ? 'Register Your Face' : 'Verify Your Identity'}
               </h3>
               <p className="text-muted-foreground">
-                {type === 'enrol' 
+                {type === 'enrol'
                   ? 'We\'ll capture your face to create a secure biometric template'
                   : 'Look at the camera to verify your identity'
                 }
@@ -234,7 +250,7 @@ export function FaceDetection({
                 <div className="absolute inset-0 border-2 border-green-400 rounded-full animate-pulse" />
               </div>
             </div>
-            
+
             <div className="text-center space-y-2">
               <p className="font-medium">{instructions}</p>
               <div className="flex justify-center space-x-2">
@@ -338,7 +354,7 @@ export function FaceDetection({
       <CardHeader>
         <CardTitle>Face Verification</CardTitle>
         <CardDescription>
-          {type === 'enrol' 
+          {type === 'enrol'
             ? 'Register your face for secure identity verification'
             : 'Verify your identity using face recognition'
           }
@@ -350,7 +366,7 @@ export function FaceDetection({
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        
+
         <div ref={containerRef} className="min-h-[400px] flex items-center justify-center">
           {renderStatus()}
         </div>

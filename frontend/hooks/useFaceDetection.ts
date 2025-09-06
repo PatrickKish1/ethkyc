@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Human, Config, Result } from '@vladmandic/human'
 
 export interface FaceDetectionResult {
   success: boolean
@@ -21,18 +20,18 @@ export interface UseFaceDetectionReturn {
   isDetecting: boolean
   isInitialized: boolean
   isWebcamReady: boolean
-  
+
   // Detection results
   lastResult: FaceDetectionResult | null
   detectionHistory: FaceDetectionResult[]
-  
+
   // Methods
   initialize: () => Promise<void>
   startDetection: () => Promise<void>
   stopDetection: () => void
   captureFrame: () => Promise<FaceDetectionResult | null>
   clearHistory: () => void
-  
+
   // Error handling
   error: string | null
   clearError: () => void
@@ -45,8 +44,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const [lastResult, setLastResult] = useState<FaceDetectionResult | null>(null)
   const [detectionHistory, setDetectionHistory] = useState<FaceDetectionResult[]>([])
   const [error, setError] = useState<string | null>(null)
-  
-  const humanRef = useRef<Human | null>(null)
+
+  const humanRef = useRef<any | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -61,23 +60,26 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       setError(null)
       setIsInitialized(false)
 
+      // Dynamically import Human library only on client side
+      const { Human } = await import('@vladmandic/human')
+
       // Human configuration optimized for face detection and liveness
-      const config: Partial<Config> = {
+      const config = {
         debug: false,
-        backend: 'webgl', // Use WebGL for better performance
+        backend: 'webgl' as any, // Use WebGL for better performance
         modelBasePath: 'https://vladmandic.github.io/human-models/models/',
-        filter: { 
-          enabled: true, 
-          equalization: true, 
-          flip: false 
+        filter: {
+          enabled: true,
+          equalization: true,
+          flip: false
         },
         face: {
           enabled: true,
-          detector: { 
-            rotation: true, 
+          detector: {
+            rotation: true,
             maxDetected: 1, // Only detect one face for KYC
             minConfidence: 0.3,
-            return: true 
+            return: true
           },
           mesh: { enabled: true },
           iris: { enabled: true },
@@ -102,7 +104,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       videoRef.current = document.createElement('video')
       videoRef.current.playsInline = true
       videoRef.current.muted = true
-      
+
       canvasRef.current = document.createElement('canvas')
       canvasRef.current.width = 640
       canvasRef.current.height = 480
@@ -147,7 +149,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         try {
           const result = await humanRef.current.detect(videoRef.current)
           const faceResult = processDetectionResult(result, canvasRef.current)
-          
+
           if (faceResult) {
             setLastResult(faceResult)
             setDetectionHistory(prev => [...prev.slice(-9), faceResult]) // Keep last 10 results
@@ -174,7 +176,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const stopDetection = useCallback(() => {
     setIsDetecting(false)
     isDetectingRef.current = false
-    
+
     if (detectionIntervalRef.current) {
       clearTimeout(detectionIntervalRef.current)
       detectionIntervalRef.current = null
@@ -197,12 +199,12 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     try {
       const result = await humanRef.current.detect(videoRef.current)
       const faceResult = processDetectionResult(result, canvasRef.current)
-      
+
       if (faceResult) {
         setLastResult(faceResult)
         setDetectionHistory(prev => [...prev.slice(-9), faceResult])
       }
-      
+
       return faceResult
     } catch (err) {
       console.error('Capture error:', err)
@@ -241,13 +243,13 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   }
 }
 
-function processDetectionResult(result: Result, canvas: HTMLCanvasElement): FaceDetectionResult | null {
+function processDetectionResult(result: any, canvas: HTMLCanvasElement): FaceDetectionResult | null {
   if (!result.face || result.face.length === 0) {
     return null
   }
 
   const face = result.face[0] // Get the first (and only) detected face
-  
+
   // Draw the face on canvas for frame capture
   const ctx = canvas.getContext('2d')
   if (ctx && result.canvas) {
@@ -256,13 +258,13 @@ function processDetectionResult(result: Result, canvas: HTMLCanvasElement): Face
 
   // Calculate liveness score based on multiple factors
   const livenessScore = calculateLivenessScore(face)
-  
+
   // Get antispoof score
   const antispoofScore = face.antispoof?.score || 0
-  
+
   // Get emotion
   const emotion = face.emotion?.[0]?.emotion || 'neutral'
-  
+
   // Get age and gender
   const age = face.age || 0
   const gender = face.gender || 'unknown'

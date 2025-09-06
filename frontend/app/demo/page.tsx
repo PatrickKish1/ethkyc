@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { KycButton } from '@/components/kyc/KycButton'
@@ -47,7 +48,8 @@ export default function DemoPage() {
 
   return (
     <main>
-      <Header className="bg-gray-300" />
+
+      <Header className="bg-gray-600" />
       <div className="container mx-auto px-4 py-8 max-w-4xl mt-14">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">UniKYC Demo</h1>
@@ -124,7 +126,7 @@ export default function DemoPage() {
                         {kycStatus.hasKyc ? kycStatus.status.toUpperCase() : 'NO KYC'}
                       </Badge>
                     </div>
-                    
+
                     {kycStatus.hasKyc && kycStatus.record && (
                       <div className="space-y-2 text-sm">
                         <p><strong>ENS Name:</strong> {kycStatus.record.ensName}</p>
@@ -182,7 +184,7 @@ export default function DemoPage() {
                 <ConnectWallet />
               </div>
             )}
-            
+
             <p className="text-sm text-muted-foreground mt-4">
               This will open a modal where you can complete your KYC verification process
             </p>
@@ -265,7 +267,7 @@ export default function DemoPage() {
                 </ul>
               </div>
             </div>
-            
+
             <div className="p-4 bg-muted rounded-lg">
               <h4 className="font-semibold mb-2">How It Works</h4>
               <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">

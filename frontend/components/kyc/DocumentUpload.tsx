@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import React, { useState, useCallback } from 'react'
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Upload, FileText, CheckCircle, X } from 'lucide-react'
 import { uploadFile } from '@/lib/storage/storacha'
+import Image from 'next/image'
 
 export interface DocumentFile {
   file: File
@@ -125,7 +127,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
       <CardHeader>
         <CardTitle>Identity Documents</CardTitle>
         <CardDescription>
-          Upload your government-issued ID documents (passport, driver's license, national ID)
+          {`Upload your government-issued ID documents (passport, driver's license, national ID)`}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -170,10 +172,12 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
               <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
                 <div className="flex-shrink-0">
                   {doc.file.type.startsWith('image/') ? (
-                    <img 
+                    <Image 
                       src={doc.preview} 
                       alt="Document preview" 
                       className="w-12 h-12 object-cover rounded"
+                      width={48}
+                      height={48}
                     />
                   ) : (
                     <FileText className="w-12 h-12 text-red-500" />
@@ -196,7 +200,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: Doc
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="passport">Passport</SelectItem>
-                    <SelectItem value="drivers_license">Driver's License</SelectItem>
+                    <SelectItem value="drivers_license">{`Driver's License`}</SelectItem>
                     <SelectItem value="national_id">National ID</SelectItem>
                     <SelectItem value="utility_bill">Utility Bill</SelectItem>
                     <SelectItem value="bank_statement">Bank Statement</SelectItem>

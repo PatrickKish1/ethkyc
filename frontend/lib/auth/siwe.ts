@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { SiweMessage, generateNonce as siweGenerateNonce } from "siwe";
