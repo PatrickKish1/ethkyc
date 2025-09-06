@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import { useState, useEffect, useCallback } from 'react'
@@ -48,9 +49,6 @@ export function useKycStatus(identifier?: string): UseKycStatusReturn {
       const status: KycStatus = {
         hasKyc: kycResult.hasKyc,
         status: kycResult.status || 'none',
-<<<<<<< HEAD
-        record: kycResult.record as KycRecord | undefined
-=======
         record: kycResult.record ? {
           ...kycResult.record,
           status: kycResult.record.status === 'approved' ? 'active' : 
@@ -92,7 +90,6 @@ export function useKycStatus(identifier?: string): UseKycStatusReturn {
             tags: ['kyc', 'verification']
           }
         } : undefined
->>>>>>> 70eedcbcaab9df7957e5e85c5ea97066b322c348
       }
       
       setKycStatus(status)
@@ -166,6 +163,10 @@ export function useKycStatusByAddress(address?: string): UseKycStatusReturn {
 export function useConnectedKycStatus(): UseKycStatusReturn {
   const { address, isConnected } = useAccount()
   
+  // Always call the hook unconditionally
+  const kycStatusResult = useKycStatus(address)
+  
+  // Return empty state if not connected
   if (!isConnected || !address) {
     return {
       kycStatus: null,
@@ -175,6 +176,6 @@ export function useConnectedKycStatus(): UseKycStatusReturn {
       checkStatus: async () => ({ hasKyc: false, status: 'none' }),
     }
   }
-
-  return useKycStatus(address)
+  
+  return kycStatusResult
 }

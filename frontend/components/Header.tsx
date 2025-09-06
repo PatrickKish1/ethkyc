@@ -9,6 +9,7 @@ import {
   Wallet,
   WalletDropdown,
   WalletDropdownDisconnect,
+  WalletModal,
 } from "@coinbase/onchainkit/wallet";
 import {
   Name,
@@ -26,7 +27,7 @@ interface HeaderProps {
 export default function Header({ className }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const [showModal, setShowModal] = useState(false);
   // Check if className contains background classes
   const hasCustomBackground = className && (
     className.includes('bg-') ||

@@ -73,7 +73,6 @@ export function KycButton({
   const { initiateVerification, isInitiating, error, clearError } = useKycVerification()
   const { registerEns, isRegistering, clearError: clearEnsError } = useEnsRegistration()
 
-<<<<<<< HEAD
   const detectEnsName = useCallback(async () => {
     if (!address) return
     
@@ -98,7 +97,6 @@ export function KycButton({
       detectEnsName()
     }
   }, [isConnected, address, detectEnsName])
-=======
   // Auto-detect ENS name when wallet connects
   useEffect(() => {
     const detectEnsName = async () => {
@@ -123,7 +121,6 @@ export function KycButton({
       detectEnsName()
     }
   }, [isConnected, address, refetchStatus])
->>>>>>> 70eedcbcaab9df7957e5e85c5ea97066b322c348
 
 
   const handleOpenModal = async () => {
