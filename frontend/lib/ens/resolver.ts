@@ -93,24 +93,12 @@ class EnsResolver {
       })
 
       // Get text records
-      const resolver = await this.client.getEnsResolver({
-        name: normalizedName,
-      })
-
-      if (!resolver) {
-        return {
-          name,
-          address,
-          avatar: avatar || undefined,
-        }
-      }
-
       const [description, url, twitter, github, email] = await Promise.all([
-        resolver.getText('description'),
-        resolver.getText('url'),
-        resolver.getText('com.twitter'),
-        resolver.getText('com.github'),
-        resolver.getText('email'),
+        this.client.getEnsText({ name: normalizedName, key: 'description' }).catch(() => null),
+        this.client.getEnsText({ name: normalizedName, key: 'url' }).catch(() => null),
+        this.client.getEnsText({ name: normalizedName, key: 'com.twitter' }).catch(() => null),
+        this.client.getEnsText({ name: normalizedName, key: 'com.github' }).catch(() => null),
+        this.client.getEnsText({ name: normalizedName, key: 'email' }).catch(() => null),
       ])
 
       return {

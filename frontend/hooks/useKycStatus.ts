@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
 import { kycService } from '@/lib/kyc/service'
-import { kycStorage, KycRecord } from '@/lib/ens/resolver'
+import { kycStorage } from '@/lib/ens/resolver'
 import { ensResolver } from '@/lib/ens/resolver'
-import type { KycStatus } from '@/lib/kyc/types'
+import type { KycStatus, KycRecord } from '@/lib/kyc/types'
 
 export interface UseKycStatusReturn {
   kycStatus: KycStatus | null
@@ -48,7 +48,7 @@ export function useKycStatus(identifier?: string): UseKycStatusReturn {
       const status: KycStatus = {
         hasKyc: kycResult.hasKyc,
         status: kycResult.status || 'none',
-        record: kycResult.record
+        record: kycResult.record as KycRecord | undefined
       }
       
       setKycStatus(status)

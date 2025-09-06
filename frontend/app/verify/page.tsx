@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { KycButton } from '@/components/kyc/KycButton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 
-export default function VerifyPage() {
+function VerifyContent() {
   const searchParams = useSearchParams()
   const [identifier, setIdentifier] = useState<string>('')
   const [returnUrl, setReturnUrl] = useState<string>('')
@@ -108,5 +108,24 @@ export default function VerifyPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Loading...</CardTitle>
+            <CardDescription>
+              Preparing verification...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
   )
 }

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable  @typescript-eslint/no-require-imports */
 import { ensResolver, EnsProfile } from '../ens/resolver'
 import { thresholdCrypto, KeyShare } from '../crypto/threshold'
 import { biometricVerification, BiometricVerificationResult } from '../auth/biometric'
