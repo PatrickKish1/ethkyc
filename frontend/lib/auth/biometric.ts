@@ -183,7 +183,7 @@ export class BiometricVerification {
       return {
         id: credential.id,
         type: credential.type as 'public-key',
-        transports: (credential as any).getTransports?.() || [],
+        transports: (credential as PublicKeyCredential & { getTransports?: () => string[] }).getTransports?.() || [],
       }
     } catch (error) {
       console.error('Failed to create biometric credential:', error)
@@ -239,10 +239,10 @@ export class BiometricVerification {
       }
 
       // Verify the signature
-      const signature = assertion.response as AuthenticatorAssertionResponse
-      const clientDataJSON = signature.clientDataJSON
-      const authenticatorData = signature.authenticatorData
-      const signatureBytes = signature.signature
+      // const signature = assertion.response as AuthenticatorAssertionResponse
+      // const clientDataJSON = signature.clientDataJSON
+      // const authenticatorData = signature.authenticatorData
+      // const signatureBytes = signature.signature
 
       // In a real implementation, you would verify the signature on the server
       // For now, we'll assume it's valid if we get here
@@ -314,7 +314,7 @@ export class BiometricVerification {
   /**
    * Delete stored credential
    */
-  async deleteCredential(credentialId: string): Promise<boolean> {
+  async deleteCredential(): Promise<boolean> {
     if (!this.isSupported()) {
       return false
     }

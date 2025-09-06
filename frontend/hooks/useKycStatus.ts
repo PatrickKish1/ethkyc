@@ -48,7 +48,51 @@ export function useKycStatus(identifier?: string): UseKycStatusReturn {
       const status: KycStatus = {
         hasKyc: kycResult.hasKyc,
         status: kycResult.status || 'none',
+<<<<<<< HEAD
         record: kycResult.record as KycRecord | undefined
+=======
+        record: kycResult.record ? {
+          ...kycResult.record,
+          status: kycResult.record.status === 'approved' ? 'active' : 
+                  kycResult.record.status === 'expired' ? 'expired' : 'revoked',
+          verificationData: {
+            firstName: '',
+            lastName: '',
+            dateOfBirth: '',
+            nationality: '',
+            address: {
+              street: '',
+              city: '',
+              state: '',
+              country: '',
+              postalCode: ''
+            },
+            documents: [],
+            verificationStatus: kycResult.record.status as 'pending' | 'approved' | 'rejected' | 'expired',
+            verificationDate: kycResult.record.createdAt,
+            expiryDate: kycResult.record.verificationData.expiryDate,
+            kycProvider: 'manual',
+            providerReference: kycResult.record.id
+          },
+          thresholdScheme: {
+            totalKeys: 5,
+            requiredKeys: 3,
+            keys: [],
+            encryptedData: '',
+            createdAt: kycResult.record.createdAt
+          },
+          blocklockData: kycResult.record.blocklockData ? {
+            ...kycResult.record.blocklockData,
+            chainId: 1 // Default to mainnet
+          } : undefined,
+          updatedAt: kycResult.record.createdAt,
+          metadata: {
+            version: '1.0.0',
+            schema: 'kyc-v1',
+            tags: ['kyc', 'verification']
+          }
+        } : undefined
+>>>>>>> 70eedcbcaab9df7957e5e85c5ea97066b322c348
       }
       
       setKycStatus(status)

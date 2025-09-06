@@ -56,7 +56,7 @@ export interface KycRecord {
   verificationData: KycVerificationData
   thresholdScheme: ThresholdScheme
   blocklockData?: {
-    ciphertext: any
+    ciphertext: unknown
     condition: string
     unlockBlockHeight: number
     chainId: number
@@ -152,13 +152,13 @@ export interface KycProviderConfig {
   apiKey: string
   apiSecret: string
   webhookUrl?: string
-  config: Record<string, any>
+  config: Record<string, unknown>
 }
 
 export interface KycWebhookPayload {
   provider: KycProvider
   event: string
-  data: any
+  data: unknown
   signature?: string
   timestamp: string
 }

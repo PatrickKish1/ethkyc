@@ -17,6 +17,8 @@ export interface DocumentFile {
   type: DocumentType
   preview: string
   cid?: string
+  uploadStatus?: 'pending' | 'uploading' | 'uploaded' | 'error'
+  error?: string
 }
 
 interface DocumentUploadProps {
@@ -26,7 +28,7 @@ interface DocumentUploadProps {
   email?: string
 }
 
-export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email }: DocumentUploadProps) {
+export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5 }: DocumentUploadProps) {
   const [documents, setDocuments] = useState<DocumentFile[]>([])
   const [uploading, setUploading] = useState<boolean>(false)
   const [dragOver, setDragOver] = useState<boolean>(false)
@@ -56,7 +58,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email
       
       const docFile: DocumentFile = {
         file,
-        type: (documentType as unknown as DocumentType) || 'passport',
+        type: (documentType as DocumentType) || 'passport',
         preview
       }
 
@@ -75,18 +77,49 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email
 
     setUploading(true)
     try {
-      // For now, just save documents in state without uploading to Storacha
-      // Generate temporary CIDs for UI consistency
-      const uploadedDocs = documents.map((doc, index) => {
-        if (doc.cid) return doc // Already processed
+      // Upload each document to Storacha
+      const uploadPromises = documents.map(async (doc, index) => {
+        if (doc.cid || doc.uploadStatus === 'uploaded') return doc // Already uploaded
         
-        // Generate a temporary CID-like identifier
-        const tempCid = `temp_${Date.now()}_${index}_${doc.file.name.replace(/[^a-zA-Z0-9]/g, '_')}`
-        return { ...doc, cid: tempCid }
+        try {
+          // Update status to uploading
+          const updatedDoc = { ...doc, uploadStatus: 'uploading' as const }
+          const updatedDocuments = documents.map((d, i) => i === index ? updatedDoc : d)
+          setDocuments(updatedDocuments)
+          onDocumentsChange(updatedDocuments)
+          
+          // Upload to Storacha
+          const cid = await uploadFile(doc.file)
+          
+          // Update with successful upload
+          const successDoc = { 
+            ...doc, 
+            cid, 
+            uploadStatus: 'uploaded' as const 
+          }
+          
+          return successDoc
+        } catch (error) {
+          console.error(`Failed to upload document ${index}:`, error)
+          const errorDoc = { 
+            ...doc, 
+            uploadStatus: 'error' as const,
+            error: error instanceof Error ? error.message : 'Upload failed'
+          }
+          return errorDoc
+        }
       })
 
+      const uploadedDocs = await Promise.all(uploadPromises)
       setDocuments(uploadedDocs)
       onDocumentsChange(uploadedDocs)
+      
+      // Check if any uploads failed
+      const failedUploads = uploadedDocs.filter(doc => doc.uploadStatus === 'error')
+      if (failedUploads.length > 0) {
+        onError(`${failedUploads.length} document(s) failed to upload. Please try again.`)
+      }
+      
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Failed to process documents')
     } finally {
@@ -130,6 +163,32 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email
       fileInput.click()
     }
   }, [])
+
+  const getUploadStatusIcon = (doc: DocumentFile) => {
+    switch (doc.uploadStatus) {
+      case 'uploading':
+        return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+      case 'uploaded':
+        return <CheckCircle className="w-4 h-4 text-green-500" />
+      case 'error':
+        return <X className="w-4 h-4 text-red-500" />
+      default:
+        return null
+    }
+  }
+
+  const getUploadStatusText = (doc: DocumentFile) => {
+    switch (doc.uploadStatus) {
+      case 'uploading':
+        return 'Uploading...'
+      case 'uploaded':
+        return 'Uploaded'
+      case 'error':
+        return 'Failed'
+      default:
+        return 'Pending'
+    }
+  }
 
   return (
     <Card>
@@ -204,11 +263,25 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email
                   <p className="text-xs text-muted-foreground">
                     {(doc.file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
+                  {doc.uploadStatus && (
+                    <p className={`text-xs ${
+                      doc.uploadStatus === 'uploaded' ? 'text-green-600' :
+                      doc.uploadStatus === 'error' ? 'text-red-600' :
+                      doc.uploadStatus === 'uploading' ? 'text-blue-600' :
+                      'text-gray-600'
+                    }`}>
+                      {getUploadStatusText(doc)}
+                    </p>
+                  )}
+                  {doc.error && (
+                    <p className="text-xs text-red-600">{doc.error}</p>
+                  )}
                 </div>
 
                 <Select 
                   value={doc.type as unknown as string} 
                   onValueChange={(value) => updateDocumentType(index, value)}
+                  disabled={doc.uploadStatus === 'uploading'}
                 >
                   <SelectTrigger className="w-40">
                     <SelectValue />
@@ -223,11 +296,12 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email
                 </Select>
 
                 <div className="flex items-center space-x-2">
-                  {doc.cid && <CheckCircle className="w-4 h-4 text-green-500" />}
+                  {getUploadStatusIcon(doc)}
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeDocument(index)}
+                    disabled={doc.uploadStatus === 'uploading'}
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -236,7 +310,7 @@ export function DocumentUpload({ onDocumentsChange, onError, maxFiles = 5, email
             ))}
 
             {/* Upload Button */}
-            {documents.some(doc => !doc.cid) && (
+            {documents.some(doc => !doc.cid && doc.uploadStatus !== 'uploading') && (
               <Button 
                 onClick={uploadDocuments} 
                 disabled={uploading}

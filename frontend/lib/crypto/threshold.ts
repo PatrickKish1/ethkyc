@@ -253,8 +253,9 @@ export class ThresholdCryptography {
    * Hash data for verification
    */
   hashData(data: string): string {
-    const crypto = require('crypto')
-    return crypto.createHash('sha256').update(data).digest('hex')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { createHash } = require('crypto')
+    return createHash('sha256').update(data).digest('hex')
   }
 }
 

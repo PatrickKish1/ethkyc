@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
         hasKyc: status.hasKyc,
         status: status.status,
         lastVerified: status.lastVerified,
-        expiryDate: status.expiryDate
+        expiryDate: status.expiryDate,
+        ensName: status.ensName,
+        address: status.address
       }
     })
   } catch (error) {

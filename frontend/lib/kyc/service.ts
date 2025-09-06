@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable  @typescript-eslint/no-require-imports */
@@ -6,6 +7,12 @@ import { thresholdCrypto, KeyShare } from '../crypto/threshold'
 import { biometricVerification, BiometricVerificationResult } from '../auth/biometric'
 import { FaceDetectionResult } from '../../hooks/useFaceDetection'
 import { uploadFile } from '../storage/storacha'
+=======
+import { ensResolver } from '../ens/resolver'
+import { thresholdCrypto } from '../crypto/threshold'
+import { biometricVerification, BiometricVerificationResult } from '../auth/biometric'
+// import { uploadFile } from '../storage/storacha'
+>>>>>>> 70eedcbcaab9df7957e5e85c5ea97066b322c348
 import { Randomness } from 'randomness-js'
 import { Blocklock, encodeCiphertextToSolidity, encodeCondition } from 'blocklock-js'
 import { JsonRpcProvider } from 'ethers'
@@ -17,9 +24,9 @@ import {
   BiometricVerificationRequest,
   ThresholdDecryptionRequest,
   ThresholdDecryptionResult,
-  KycProvider,
-  THRESHOLD_CONFIGS,
-  ThresholdConfig,
+  // KycProvider,
+  // THRESHOLD_CONFIGS,
+  // ThresholdConfig,
 } from './types'
 
 export class KycService {
@@ -183,7 +190,9 @@ export class KycService {
       // Generate threshold cryptography keys
       const thresholdConfig = { totalKeys: 5, requiredKeys: 3 }
       // Generate a proper 32-byte hex key for AES-256
-      const masterKey = require('crypto').randomBytes(32).toString('hex')
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { randomBytes } = require('crypto')
+      const masterKey = randomBytes(32).toString('hex')
       const keyShares = thresholdCrypto.generateKeyShares(masterKey, thresholdConfig)
 
       // Encrypt verification data
@@ -194,11 +203,11 @@ export class KycService {
 
       // Generate verifiable random ID and encrypt with blocklock if chainId provided
       let randomnessId: string | undefined
-      let blocklockData: any | undefined
+      let blocklockData: unknown | undefined
       
       if (request.chainId) {
         try {
-          randomnessId = await this.generateRandomKycId(request.chainId)
+          randomnessId = await this.generateRandomKycId()
           
           // Encrypt sensitive KYC data with blocklock for conditional release
           const sensitiveData = JSON.stringify({
@@ -411,7 +420,7 @@ export class KycService {
       }
 
       const record = kycStatus.record
-      const { totalKeys, requiredKeys, encryptedData } = record.thresholdScheme
+      const { requiredKeys, encryptedData } = record.thresholdScheme
 
       // Validate key shares
       if (request.keyShares.length < requiredKeys) {
@@ -563,7 +572,7 @@ export class KycService {
       // Store credential reference
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem(this.biometricKey)
-        const credentials: Record<string, any> = stored ? JSON.parse(stored) : {}
+        const credentials: Record<string, unknown> = stored ? JSON.parse(stored) : {}
         credentials[userId] = credential
         localStorage.setItem(this.biometricKey, JSON.stringify(credentials))
       }
@@ -575,7 +584,7 @@ export class KycService {
   /**
    * Generate verifiable random ID for KYC records
    */
-  async generateRandomKycId(chainId: number): Promise<string> {
+  async generateRandomKycId(): Promise<string> {
     try {
       // For now, use crypto.randomUUID as primary method
       // Can integrate dcipher randomness later when signer is available
@@ -594,7 +603,7 @@ export class KycService {
     data: string,
     unlockBlockHeight: number,
     chainId: number
-  ): Promise<{ ciphertext: any; condition: string }> {
+  ): Promise<{ ciphertext: unknown; condition: string }> {
     try {
       const blocklock = this.getBlocklockInstance(chainId)
       const encodedData = new TextEncoder().encode(data)
